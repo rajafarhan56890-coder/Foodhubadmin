@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FoodHub Pro — Admin Panel</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* =========================================================
+   FoodHub Pro — Admin Panel styles
+   Same design tokens as the storefront ("kitchen ticket rail"):
+   ink/paper background pair, zest accent, chili for destructive/
+   cancelled states, herb for success/delivered states.
+   ========================================================= */
+:root{
+  --ink:#1E1B18; --ink-raised:#2A2521; --paper:#FAF6EE; --paper-dim:#EFE8D8;
+  --zest:#FFB627; --zest-dark:#E39F16; --chili:#E4572E; --herb:#4C7A5E; --slate:#6B6560;
+  --bg:var(--ink); --bg-raised:var(--ink-raised); --text:var(--paper); --text-muted:#C9C2B8;
+  --border:rgba(250,246,238,.12); --shadow:0 10px 30px rgba(0,0,0,.35);
+  --font-display:'Archivo Black',sans-serif; --font-body:'Work Sans',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+  --radius:10px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;-webkit-font-smoothing:antialiased;}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,select,textarea{font:inherit;color:var(--text);}
+a{color:var(--zest);text-decoration:none;}
+.mono{font-family:var(--font-mono);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+
+/* ---------- Login screen ---------- */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 20%,rgba(255,182,39,.08),transparent 45%),var(--bg);}
+.login-card{width:100%;max-width:380px;background:var(--bg-raised);border:1px solid var(--border);border-radius:16px;padding:36px 32px;box-shadow:var(--shadow);}
+.login-brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.login-brand-mark{width:34px;height:34px;border-radius:8px;background:var(--zest);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);color:var(--ink);font-size:16px;}
+.login-brand-name{font-family:var(--font-display);font-size:15px;letter-spacing:.02em;}
+.login-sub{color:var(--text-muted);font-size:13px;margin:0 0 26px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;letter-spacing:.02em;text-transform:uppercase;}
+.field input,.field select,.field textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 12px;font-size:14px;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--zest);}
+.field-error{color:var(--chili);font-size:12.5px;min-height:1.2em;margin-top:2px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:8px;font-weight:600;font-size:14px;transition:transform .15s ease,opacity .15s ease;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--zest);color:var(--ink);}
+.btn-primary:hover{background:var(--zest-dark);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--zest);color:var(--zest);}
+.btn-danger{background:transparent;border:1px solid rgba(228,87,46,.5);color:var(--chili);}
+.btn-danger:hover{background:rgba(228,87,46,.12);}
+.btn-block{width:100%;}
+.btn-sm{padding:7px 12px;font-size:12.5px;}
+.btn:disabled{opacity:.5;pointer-events:none;}
+
+/* ---------- Shell layout ---------- */
+#app-shell{display:none;min-height:100vh;grid-template-columns:230px 1fr;}
+#app-shell.visible{display:grid;}
+.sidebar{background:var(--bg-raised);border-right:1px solid var(--border);padding:22px 16px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:0 8px 20px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;color:var(--text-muted);font-size:14px;font-weight:500;text-align:left;width:100%;}
+.nav-item:hover{background:rgba(250,246,238,.05);color:var(--text);}
+.nav-item.active{background:rgba(255,182,39,.14);color:var(--zest);}
+.nav-item .ic{width:18px;text-align:center;}
+.sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);}
+.admin-email{font-size:11.5px;color:var(--text-muted);padding:0 12px 8px;word-break:break-all;}
+
+.main{padding:26px 32px 60px;overflow-x:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.page-title{font-family:var(--font-display);font-size:20px;letter-spacing:.01em;}
+.page-sub{color:var(--text-muted);font-size:13px;margin-top:4px;}
+
+.view{display:none;}
+.view.active{display:block;}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px;}
+.stat-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.stat-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;}
+.stat-value{font-family:var(--font-mono);font-size:26px;margin-top:6px;font-weight:600;}
+.stat-value.chili{color:var(--chili);}
+.stat-value.herb{color:var(--herb);}
+.stat-value.zest{color:var(--zest);}
+
+.panel{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;}
+.panel-head h3{margin:0;font-size:15px;font-weight:700;}
+.search-input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;min-width:180px;}
+.search-input:focus{outline:none;border-color:var(--zest);}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+thead th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-muted);padding:10px 16px;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:hover{background:rgba(250,246,238,.03);}
+.table-wrap{overflow-x:auto;}
+.cell-thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--bg);}
+.cell-name{font-weight:600;}
+.cell-muted{color:var(--text-muted);font-size:12.5px;}
+.empty-row td{text-align:center;color:var(--text-muted);padding:34px;}
+
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:11.5px;font-weight:600;font-family:var(--font-mono);}
+.badge-pending{background:rgba(255,182,39,.15);color:var(--zest);}
+.badge-preparing{background:rgba(107,101,96,.25);color:var(--text);}
+.badge-outfordelivery{background:rgba(76,122,94,.18);color:var(--herb);}
+.badge-delivered{background:rgba(76,122,94,.3);color:#8fd6ac;}
+.badge-cancelled{background:rgba(228,87,46,.15);color:var(--chili);}
+.badge-active{background:rgba(76,122,94,.18);color:var(--herb);}
+.badge-inactive{background:rgba(107,101,96,.25);color:var(--text-muted);}
+
+.status-select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12.5px;}
+
+.icon-btn{padding:6px 9px;border-radius:6px;color:var(--text-muted);}
+.icon-btn:hover{background:rgba(250,246,238,.08);color:var(--text);}
+
+/* ---------- Modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:100;}
+.modal-overlay.visible{display:flex;}
+.modal{background:var(--bg-raised);border:1px solid var(--border);border-radius:14px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
+.modal-head h3{margin:0;font-size:16px;}
+.modal-body{padding:20px 22px;}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--border);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media (max-width:520px){.form-row{grid-template-columns:1fr;}}
+.checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.checkbox-row input{width:16px;height:16px;}
+.checkbox-row label{font-size:13.5px;color:var(--text);}
+.image-preview{width:100%;height:140px;border-radius:8px;object-fit:cover;background:var(--bg);margin-bottom:10px;display:none;}
+.image-preview.visible{display:block;}
+
+/* ---------- Payment Management ---------- */
+.payment-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.payment-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.payment-card-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;}
+.payment-card-mark{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;}
+.payment-mark-easypaisa{background:linear-gradient(135deg,#0f9d4c,#0a7a3a);}
+.payment-mark-jazzcash{background:linear-gradient(135deg,#e0122a,#a90d1f);}
+.payment-mark-cod{background:linear-gradient(135deg,#6B6560,#4a453f);}
+.toggle-switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:rgba(250,246,238,.15);border-radius:999px;transition:background .2s ease;}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s ease;}
+.toggle-switch input:checked + .toggle-slider{background:var(--herb);}
+.toggle-switch input:checked + .toggle-slider::before{transform:translateX(18px);}
+.payment-qr-preview{width:120px;height:120px;object-fit:contain;background:#fff;border-radius:8px;padding:6px;border:1px solid var(--border);margin-bottom:10px;display:none;}
+.payment-qr-preview.visible{display:block;}
+.payment-card-disabled{opacity:.55;}
+
+/* ---------- Order detail drawer ---------- */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:90;}
+.drawer-overlay.visible{display:block;}
+.drawer{position:fixed;top:0;right:-420px;width:400px;max-width:92vw;height:100%;background:var(--bg-raised);border-left:1px solid var(--border);z-index:91;transition:right .25s ease;overflow-y:auto;}
+.drawer.open{right:0;}
+.drawer-head{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.drawer-body{padding:20px 22px;}
+.drawer-section{margin-bottom:20px;}
+.drawer-section h4{font-size:12px;text-transform:uppercase;color:var(--text-muted);letter-spacing:.03em;margin:0 0 8px;}
+.order-item-row{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;color:var(--text-muted);}
+.order-item-row span:first-child{color:var(--text);}
+.order-total-row{display:flex;justify-content:space-between;font-weight:700;font-size:14.5px;padding-top:8px;border-top:1px solid var(--border);margin-top:6px;}
+
+/* ---------- Toast ---------- */
+#admin-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink-raised);border:1px solid var(--border);color:var(--text);padding:12px 20px;border-radius:100px;font-size:13.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:200;}
+#admin-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+
+.hamburger-mobile{display:none;}
+@media (max-width:860px){
+  #app-shell.visible{display:block;}
+  .sidebar{position:fixed;left:-240px;top:0;height:100vh;width:230px;z-index:80;transition:left .2s ease;}
+  .sidebar.open{left:0;}
+  .main{padding:20px 16px 60px;}
+  .hamburger-mobile{display:inline-flex;}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-mark">FH</div>
+      <div class="login-brand-name">FOODHUB PRO</div>
+    </div>
+    <p class="login-sub">Admin Panel — sign in with your admin account.</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" autocomplete="current-password" required />
+      </div>
+      <p class="field-error" id="login-error"></p>
+      <button type="submit" class="btn btn-primary btn-block" id="login-submit">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= ACCESS CHECK SCREEN ================= -->
+<!-- Shown instead of silently signing out when Firebase Auth succeeds but
+     the admins/{uid} authorization check fails or errors — so the real
+     cause (and the exact UID needed to fix it) is never hidden. -->
+<div id="access-check-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 20%,rgba(228,87,46,.08),transparent 45%),var(--bg);">
+  <div class="login-card" style="max-width:440px;">
+    <div class="login-brand">
+      <div class="login-brand-mark" style="background:var(--chili);">!</div>
+      <div class="login-brand-name">ACCESS CHECK</div>
+    </div>
+    <p class="login-sub" id="access-check-title">We couldn't verify admin access for this account.</p>
+    <p class="field-error" id="access-check-detail" style="margin-bottom:14px;"></p>
+    <div class="field">
+      <label>Signed in as</label>
+      <input type="text" id="access-check-email" readonly style="font-family:var(--font-mono);" />
+    </div>
+    <div class="field">
+      <label>Your UID (needed to authorize this account)</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="access-check-uid" readonly style="font-family:var(--font-mono);flex:1;" />
+        <button type="button" class="btn btn-outline btn-sm" id="access-check-copy-btn">Copy</button>
+      </div>
+    </div>
+    <p class="cell-muted" style="margin:10px 0 16px;">
+      In Firebase Console → Firestore → <strong>admins</strong> collection, add a document whose ID is exactly the UID above. See SETUP.md, step 5.
+    </p>
+    <div style="display:flex;gap:10px;">
+      <button type="button" class="btn btn-outline" id="access-check-retry-btn" style="flex:1;">Retry</button>
+      <button type="button" class="btn btn-primary" id="access-check-signout-btn" style="flex:1;">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="login-brand-mark">FH</div>
+      <div class="login-brand-name" style="font-size:13px;">ADMIN</div>
+    </div>
+    <button class="nav-item active" data-view="dashboard"><span class="ic">▤</span> Dashboard</button>
+    <button class="nav-item" data-view="products"><span class="ic">🍔</span> Products</button>
+    <button class="nav-item" data-view="categories"><span class="ic">🗂</span> Categories</button>
+    <button class="nav-item" data-view="orders"><span class="ic">🧾</span> Orders</button>
+    <button class="nav-item" data-view="payments"><span class="ic">💳</span> Payment Management</button>
+    <button class="nav-item" data-view="customers"><span class="ic">👤</span> Customers</button>
+    <button class="nav-item" data-view="coupons"><span class="ic">🏷</span> Coupons</button>
+    <button class="nav-item" data-view="reviews"><span class="ic">★</span> Reviews</button>
+    <button class="nav-item" data-view="settings"><span class="ic">⚙</span> Settings</button>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email"></div>
+      <button class="nav-item" id="logout-btn"><span class="ic">↩</span> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <button class="hamburger-mobile btn btn-outline btn-sm" id="mobile-menu-btn" style="margin-bottom:16px;">☰ Menu</button>
+
+    <!-- ---- Dashboard ---- -->
+    <section class="view active" id="view-dashboard">
+      <div class="topbar"><div><div class="page-title">Dashboard</div><div class="page-sub">Live snapshot of your store, updated in real time.</div></div></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Orders Today</div><div class="stat-value zest" id="stat-orders-today">0</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Orders</div><div class="stat-value chili" id="stat-orders-pending">0</div></div>
+        <div class="stat-card"><div class="stat-label">Revenue Today</div><div class="stat-value herb" id="stat-revenue-today">Rs 0.00</div></div>
+        <div class="stat-card"><div class="stat-label">Total Products</div><div class="stat-value" id="stat-products">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Customers</div><div class="stat-value" id="stat-customers">0</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Recent Orders</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
+          <tbody id="dashboard-recent-orders"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Products ---- -->
+    <section class="view" id="view-products">
+      <div class="topbar">
+        <div><div class="page-title">Products</div><div class="page-sub">Changes here appear on the storefront instantly.</div></div>
+        <button class="btn btn-primary" id="add-product-btn">+ Add Product</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Products</h3>
+          <input class="search-input" id="products-search" placeholder="Search products…" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Rating</th><th>Status</th><th></th></tr></thead>
+          <tbody id="products-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Categories ---- -->
+    <section class="view" id="view-categories">
+      <div class="topbar">
+        <div><div class="page-title">Categories</div><div class="page-sub">Controls the category buttons and product filters on the storefront.</div></div>
+        <button class="btn btn-primary" id="add-category-btn">+ Add Category</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>All Categories</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Emoji</th><th>Name</th><th>Filter Key</th><th>Order</th><th>Status</th><th></th></tr></thead>
+          <tbody id="categories-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Orders ---- -->
+    <section class="view" id="view-orders">
+      <div class="topbar">
+        <div><div class="page-title">Orders</div><div class="page-sub">Update order status — customers see live tracking status changes.</div></div>
+        <button class="btn btn-primary" id="add-order-btn">+ Add Order (phone-in)</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Orders</h3>
+          <div class="filter-row">
+            <input class="search-input" id="orders-search" placeholder="Search order # or phone…" />
+            <select class="search-input" id="orders-status-filter">
+              <option value="">All statuses</option>
+              <option>Pending</option><option>Preparing</option><option>Out for Delivery</option><option>Delivered</option><option>Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th><th></th></tr></thead>
+          <tbody id="orders-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Payment Management ---- -->
+    <section class="view" id="view-payments">
+      <div class="topbar">
+        <div><div class="page-title">Payment Management</div><div class="page-sub">Controls which payment methods appear at checkout — changes go live on the storefront instantly.</div></div>
+      </div>
+      <form id="payments-form">
+
+        <div class="payment-card" id="pm-card-easypaisa">
+          <div class="payment-card-head">
+            <div class="payment-card-title"><span class="payment-card-mark payment-mark-easypaisa">E</span> EasyPaisa</div>
+            <label class="toggle-switch"><input type="checkbox" id="pm-easypaisa-enabled" checked /><span class="toggle-slider"></span></label>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Account Holder Name</label><input id="pm-easypaisa-title" placeholder="e.g. FoodHub Pro" /></div>
+            <div class="field"><label>Account / Mobile Number</label><input id="pm-easypaisa-number" placeholder="e.g. 0300 1234567" /></div>
+          </div>
+          <div class="field">
+            <label>QR Code</label>
+            <img class="payment-qr-preview" id="pm-easypaisa-qr-preview" />
+            <input type="file" id="pm-easypaisa-qr-file" accept="image/*" />
+            <div class="cell-muted" style="margin-top:6px;">Leave empty to keep the current QR code.</div>
+          </div>
+        </div>
+
+        <div class="payment-card" id="pm-card-jazzcash">
+          <div class="payment-card-head">
+            <div class="payment-card-title"><span class="payment-card-mark payment-mark-jazzcash">J</span> JazzCash</div>
+            <label class="toggle-switch"><input type="checkbox" id="pm-jazzcash-enabled" checked /><span class="toggle-slider"></span></label>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Account Holder Name</label><input id="pm-jazzcash-title" placeholder="e.g. FoodHub Pro" /></div>
+            <div class="field"><label>Account / Mobile Number</label><input id="pm-jazzcash-number" placeholder="e.g. 0300 7654321" /></div>
+          </div>
+          <div class="field">
+            <label>QR Code</label>
+            <img class="payment-qr-preview" id="pm-jazzcash-qr-preview" />
+            <input type="file" id="pm-jazzcash-qr-file" accept="image/*" />
+            <div class="cell-muted" style="margin-top:6px;">Leave empty to keep the current QR code.</div>
+          </div>
+        </div>
+
+        <div class="payment-card" id="pm-card-cod">
+          <div class="payment-card-head">
+            <div class="payment-card-title"><span class="payment-card-mark payment-mark-cod">₨</span> Cash on Delivery</div>
+            <label class="toggle-switch"><input type="checkbox" id="pm-cod-enabled" checked /><span class="toggle-slider"></span></label>
+          </div>
+          <div class="cell-muted">No account details needed — customers pay in cash when the order arrives.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="payments-save-btn">Save Payment Settings</button>
+        <span class="field-error" id="payments-msg" style="margin-left:10px;"></span>
+      </form>
+    </section>
+
+    <!-- ---- Customers ---- -->
+    <section class="view" id="view-customers">
+      <div class="topbar">
+        <div><div class="page-title">Customers</div><div class="page-sub">Built automatically from checkout data — also fully editable here.</div></div>
+        <button class="btn btn-primary" id="add-customer-btn">+ Add Customer</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Customers</h3>
+          <input class="search-input" id="customers-search" placeholder="Search name or phone…" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Name</th><th>Phone</th><th>City</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th></th></tr></thead>
+          <tbody id="customers-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Coupons ---- -->
+    <section class="view" id="view-coupons">
+      <div class="topbar">
+        <div><div class="page-title">Coupons</div><div class="page-sub">Applied live in the storefront cart.</div></div>
+        <button class="btn btn-primary" id="add-coupon-btn">+ Add Coupon</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>All Coupons</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min Subtotal</th><th>Status</th><th></th></tr></thead>
+          <tbody id="coupons-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Reviews ---- -->
+    <section class="view" id="view-reviews">
+      <div class="topbar"><div><div class="page-title">Reviews</div><div class="page-sub">Moderate reviews submitted from product Quick View.</div></div></div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Reviews</h3>
+          <input class="search-input" id="reviews-search" placeholder="Search reviews…" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Product ID</th><th>Name</th><th>Rating</th><th>Comment</th><th>Status</th><th></th></tr></thead>
+          <tbody id="reviews-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Settings ---- -->
+    <section class="view" id="view-settings">
+      <div class="topbar"><div><div class="page-title">Website Settings</div><div class="page-sub">Global storefront configuration.</div></div></div>
+      <div class="panel">
+        <div class="modal-body">
+          <form id="settings-form">
+            <div class="form-row">
+              <div class="field"><label>Store Name</label><input id="set-storeName" /></div>
+              <div class="field"><label>Currency Symbol</label><input id="set-currencySymbol" maxlength="6" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Tax Rate (e.g. 0.08 = 8%)</label><input id="set-taxRate" type="number" step="0.001" /></div>
+              <div class="field"><label>Delivery Fee</label><input id="set-deliveryFee" type="number" step="0.01" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Free Delivery Threshold</label><input id="set-freeDeliveryThreshold" type="number" step="0.01" /></div>
+              <div class="field"><label>Support Phone / Note</label><input id="set-supportNote" /></div>
+            </div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="set-maintenanceMode" />
+              <label for="set-maintenanceMode">Maintenance mode (reference flag — wire this into the storefront if you want an actual banner/lockout)</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+            <span class="field-error" id="settings-msg" style="margin-left:10px;"></span>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= Generic Modal (Product / Category / Coupon forms) ================= -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modal-title">Form</h3><button class="icon-btn" id="modal-close">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Order Detail Drawer ================= -->
+<div class="drawer-overlay" id="order-drawer-overlay"></div>
+<div class="drawer" id="order-drawer">
+  <div class="drawer-head"><h3 id="order-drawer-title">Order</h3><button class="icon-btn" id="order-drawer-close">✕</button></div>
+  <div class="drawer-body" id="order-drawer-body"></div>
+</div>
+
+<div id="admin-toast"></div>
+
+<script type="module">
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import {
+  getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
+  onSnapshot, getDoc, serverTimestamp, query, orderBy,
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import {
+  getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject,
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js';
+
+// firebase-config.js is normally one folder above this file (this page is
+// meant to live at admin/index.html, next to firebase-config.js at the site
+// root). A STATIC `import ... from '../firebase-config.js'` here would mean
+// that if this file ever ends up in a different folder, that one failed
+// import silently kills the ENTIRE module — nothing below it runs at all,
+// not even the login form's submit handler — with just a console error and
+// no visible sign of what went wrong. Loading it dynamically with a couple
+// of fallback locations avoids that trap and gives a clear on-screen reason
+// instead of a page that just "does nothing".
+let configModule = null;
+let configLoadError = null;
+const CONFIG_PATHS = ['../firebase-config.js', './firebase-config.js', '/firebase-config.js'];
+for (const path of CONFIG_PATHS) {
+  try {
+    configModule = await import(path);
+    break;
+  } catch (err) {
+    configLoadError = err;
+  }
+}
+
+// The Admin Panel cannot do anything useful without Firebase, so a missing
+// or invalid config gets a blocking, full-screen notice (replacing the
+// login card) rather than a half-broken login form or a console crash.
+let auth = null;
+let db = null;
+let storage = null;
+let firebaseReady = false;
+
+if (!configModule) {
+  console.error('FoodHub Admin: could not load firebase-config.js from any of', CONFIG_PATHS, configLoadError);
+  document.getElementById('login-screen').innerHTML = `
+    <div class="login-card" style="max-width:440px;">
+      <div class="login-brand"><div class="login-brand-mark" style="background:var(--chili);">!</div><div class="login-brand-name">SETUP NEEDED</div></div>
+      <p class="login-sub" style="margin-top:10px;">Couldn't load <code style="background:rgba(250,246,238,.1);padding:1px 5px;border-radius:4px;">firebase-config.js</code>.</p>
+      <p class="cell-muted" style="text-align:left;line-height:1.6;">This page expects <code style="background:rgba(250,246,238,.1);padding:1px 5px;border-radius:4px;">firebase-config.js</code> one folder above it — e.g. if this file is saved as <code style="background:rgba(250,246,238,.1);padding:1px 5px;border-radius:4px;">admin/index.html</code>, then <code style="background:rgba(250,246,238,.1);padding:1px 5px;border-radius:4px;">firebase-config.js</code> should sit next to your main <code style="background:rgba(250,246,238,.1);padding:1px 5px;border-radius:4px;">index.html</code> at the site root. Move the file so that layout matches, then reload this page.</p>
+    </div>`;
+} else {
+  const { initializeFirebaseApp, renderFirebaseConfigError } = configModule;
+  try {
+    const app = initializeFirebaseApp();
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    firebaseReady = true;
+  } catch (err) {
+    console.error('FoodHub Admin: Firebase is not configured.', err);
+    renderFirebaseConfigError(err.message || 'Firebase is not configured.', {
+      mode: 'fullscreen',
+      targetSelector: '#login-screen',
+    });
+  }
+}
+
+
+/* ---------- small helpers ---------- */
+const $ = (id) => document.getElementById(id);
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let ADMIN_CURRENCY = 'Rs ';
+function money(n) { return `${ADMIN_CURRENCY}${(Number(n) || 0).toFixed(2)}`; }
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+let toastTimer = null;
+function toast(msg) {
+  const el = $('admin-toast');
+  el.textContent = msg;
+  el.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('visible'), 2600);
+}
+function statusBadgeClass(status) { return 'badge-' + String(status || '').toLowerCase().replace(/\s+/g, ''); }
+function confirmAction(message) { return window.confirm(message); }
+
+/* ---------- Auth ---------- */
+$('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('login-error').textContent = '';
+  if (!firebaseReady) {
+    $('login-error').textContent = 'Firebase is not configured — see the notice above, then reload this page.';
+    return;
+  }
+  $('login-submit').disabled = true;
+  try {
+    await signInWithEmailAndPassword(auth, $('login-email').value.trim(), $('login-password').value);
+  } catch (err) {
+    $('login-error').textContent = 'Sign-in failed — check your email and password.';
+    console.warn(err);
+  }
+  $('login-submit').disabled = false;
+});
+
+$('logout-btn').addEventListener('click', () => { if (auth) signOut(auth); });
+
+let unsubscribers = [];
+function teardownListeners() { unsubscribers.forEach((u) => u()); unsubscribers = []; settingsFormPopulated = false; paymentsFormPopulated = false; }
+
+function showLoginScreen() {
+  $('login-screen').style.display = 'flex';
+  $('access-check-screen').style.display = 'none';
+  $('app-shell').classList.remove('visible');
+}
+function showAccessCheckScreen() {
+  $('login-screen').style.display = 'none';
+  $('access-check-screen').style.display = 'flex';
+  $('app-shell').classList.remove('visible');
+}
+function showDashboard(user) {
+  $('login-screen').style.display = 'none';
+  $('access-check-screen').style.display = 'none';
+  $('app-shell').classList.add('visible');
+  $('admin-email').textContent = user.email;
+  startListeners();
+}
+
+// Runs the admins/{uid} authorization check for the currently signed-in
+// user and updates the UI accordingly. Split out from the auth listener so
+// the Access Check screen's "Retry" button can re-run it without a full
+// sign-out/sign-in round trip.
+async function verifyAdminAccess(user) {
+  let adminDoc;
+  try {
+    adminDoc = await getDoc(doc(db, 'admins', user.uid));
+  } catch (err) {
+    console.error('FoodHub Admin: admins/{uid} read failed.', err);
+    $('access-check-title').textContent = 'Could not verify admin access.';
+    $('access-check-detail').textContent = err && err.code
+      ? `Firestore error: ${err.code}. This almost always means firestore.rules hasn't been published yet, or doesn't match the "admins" collection rule.`
+      : 'An unexpected error occurred while checking your access.';
+    $('access-check-email').value = user.email || '';
+    $('access-check-uid').value = user.uid;
+    showAccessCheckScreen();
+    return false;
+  }
+  if (!adminDoc.exists()) {
+    $('access-check-title').textContent = 'This account is not authorized as an admin.';
+    $('access-check-detail').textContent = '';
+    $('access-check-email').value = user.email || '';
+    $('access-check-uid').value = user.uid;
+    showAccessCheckScreen();
+    return false;
+  }
+  return true;
+}
+
+$('access-check-retry-btn').addEventListener('click', async () => {
+  if (!auth.currentUser) return;
+  $('access-check-detail').textContent = 'Checking…';
+  const ok = await verifyAdminAccess(auth.currentUser);
+  if (ok) showDashboard(auth.currentUser);
+});
+$('access-check-signout-btn').addEventListener('click', () => { if (auth) signOut(auth); });
+$('access-check-copy-btn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('access-check-uid').value);
+    toast('UID copied.');
+  } catch (err) {
+    $('access-check-uid').select();
+  }
+});
+
+// Only wired up when Firebase actually initialized — otherwise the login
+// screen already shows the full-screen configuration notice and there is
+// nothing further to set up.
+if (firebaseReady) {
+  onAuthStateChanged(auth, async (user) => {
+    teardownListeners();
+    if (!user) {
+      showLoginScreen();
+      return;
+    }
+    const authorized = await verifyAdminAccess(user); // paints the access-check screen itself on failure
+    if (authorized) showDashboard(user);
+  });
+}
+
+/* ---------- Sidebar navigation ---------- */
+document.querySelectorAll('.nav-item[data-view]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item[data-view]').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+    $(`view-${btn.getAttribute('data-view')}`).classList.add('active');
+    $('sidebar').classList.remove('open');
+  });
+});
+$('mobile-menu-btn').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+
+/* ---------- Generic modal ---------- */
+let modalOnSave = null;
+function openModal(title, bodyHtml, onSave) {
+  $('modal-title').textContent = title;
+  $('modal-body').innerHTML = bodyHtml;
+  modalOnSave = onSave;
+  $('modal-overlay').classList.add('visible');
+}
+function closeModal() { $('modal-overlay').classList.remove('visible'); modalOnSave = null; }
+$('modal-close').addEventListener('click', closeModal);
+$('modal-cancel').addEventListener('click', closeModal);
+$('modal-overlay').addEventListener('click', (e) => { if (e.target === $('modal-overlay')) closeModal(); });
+$('modal-save').addEventListener('click', async () => {
+  if (!modalOnSave) return;
+  const btn = $('modal-save');
+  const originalLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    // BUG FIX: this used to race modalOnSave() (which awaits the image
+    // upload, then the Firestore write) against a bare 45s setTimeout via
+    // Promise.race(). Whichever settled first won — so on a slow upload,
+    // a big photo, or just an unlucky moment, the timeout fired first and
+    // its generic "Save request timed out — the network may be blocking
+    // Firebase" message replaced whatever the *real* Storage/Firestore
+    // error was (or wasn't — the save might still complete a moment
+    // later, invisibly, after the modal already reported failure).
+    // Awaiting modalOnSave() directly means we always see the actual
+    // outcome: it resolves when the real save finishes, or rejects with
+    // whatever error Storage/Firestore actually threw.
+    await modalOnSave();
+    closeModal();
+  } catch (err) {
+    console.error(err);
+    const code = err && err.code ? ` (${err.code})` : '';
+    const reason = err && err.message === 'validation' ? '' : (err && err.message ? `: ${err.message}${code}` : code);
+    toast(`Save failed${reason || ' — check the console for details.'}`);
+  }
+  btn.disabled = false; btn.textContent = originalLabel;
+});
+
+/* =========================================================
+   PRODUCTS
+   ========================================================= */
+let productsCache = [];
+let categoriesCache = [];
+
+function renderProductsTable() {
+  const q = ($('products-search').value || '').toLowerCase();
+  const rows = productsCache.filter((p) => !q || (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+  $('products-table-body').innerHTML = rows.length === 0
+    ? `<tr class="empty-row"><td colspan="7">No products yet — click "Add Product" to create your first dish.</td></tr>`
+    : rows.map((p) => `
+      <tr>
+        <td>${p.imageUrl ? `<img class="cell-thumb" src="${esc(p.imageUrl)}" alt="" />` : '<div class="cell-thumb"></div>'}</td>
+        <td><div class="cell-name">${esc(p.name)}${p.vegetarian ? ' 🌱' : ''}</div><div class="cell-muted">${esc(p.restaurant || '')}</div></td>
+        <td>${esc(p.category)}</td>
+        <td class="mono">${money(p.price)}</td>
+        <td class="mono">★ ${(Number(p.rating) || 4.5).toFixed(1)}</td>
+        <td><span class="badge ${p.active ? 'badge-active' : 'badge-inactive'}">${p.active ? 'Active' : 'Hidden'}</span></td>
+        <td>
+          <button class="icon-btn" data-edit-product="${p.id}">✎</button>
+          <button class="icon-btn" data-delete-product="${p.id}">🗑</button>
+        </td>
+      </tr>`).join('');
+}
+$('products-search').addEventListener('input', renderProductsTable);
+
+function categoryOptionsHTML(selected) {
+  if (categoriesCache.length === 0) return `<option value="">No categories yet — add one first</option>`;
+  return categoriesCache.map((c) => `<option value="${esc(c.filterKey)}" ${c.filterKey === selected ? 'selected' : ''}>${esc(c.name)} (${esc(c.filterKey)})</option>`).join('');
+}
+
+function productFormHTML(p = {}) {
+  return `
+    <div class="field"><label>Dish Name</label><input id="pf-name" value="${esc(p.name || '')}" /></div>
+    <div class="field"><label>Description</label><textarea id="pf-description" rows="2">${esc(p.description || '')}</textarea></div>
+    <div class="form-row">
+      <div class="field"><label>Category</label><select id="pf-category">${categoryOptionsHTML(p.category)}</select></div>
+      <div class="field"><label>Price (PKR)</label><input id="pf-price" type="number" step="0.01" value="${p.price ?? ''}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Restaurant / Kitchen</label><input id="pf-restaurant" value="${esc(p.restaurant || '')}" /></div>
+      <div class="field"><label>Rating (0–5)</label><input id="pf-rating" type="number" step="0.1" min="0" max="5" value="${p.rating ?? 4.5}" /></div>
+    </div>
+    <div class="field"><label>Badge (optional, e.g. BESTSELLER, NEW)</label><input id="pf-badge" value="${esc(p.badge || '')}" /></div>
+    <div class="field">
+      <label>Product Image</label>
+      <img class="image-preview ${p.imageUrl ? 'visible' : ''}" id="pf-image-preview" src="${esc(p.imageUrl || '')}" />
+      <input type="file" id="pf-image-file" accept="image/*" />
+      <div class="cell-muted" style="margin-top:6px;">Leave empty to keep the current image, or to fall back to a live stock photo for the category.</div>
+    </div>
+    <div class="checkbox-row"><input type="checkbox" id="pf-vegetarian" ${p.vegetarian ? 'checked' : ''} /><label for="pf-vegetarian">Vegetarian (drives the storefront's "Vegetarian mode" filter)</label></div>
+    <div class="checkbox-row"><input type="checkbox" id="pf-active" ${p.active !== false ? 'checked' : ''} /><label for="pf-active">Active (visible on storefront)</label></div>
+  `;
+}
+
+$('add-product-btn').addEventListener('click', () => {
+  openModal('Add Product', productFormHTML(), async () => {
+    const file = $('pf-image-file').files[0];
+    const name = $('pf-name').value.trim();
+    const category = $('pf-category').value;
+    if (!name || !category) { toast('Name and category are required.'); throw new Error('validation'); }
+    const data = {
+      name,
+      description: $('pf-description').value.trim(),
+      category,
+      price: parseFloat($('pf-price').value) || 0,
+      restaurant: $('pf-restaurant').value.trim(),
+      rating: parseFloat($('pf-rating').value) || 4.5,
+      badge: $('pf-badge').value.trim(),
+      vegetarian: $('pf-vegetarian').checked,
+      active: $('pf-active').checked,
+      imageUrl: '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    // Pre-generate the document ID so the photo (if any) can be uploaded to
+    // its final path and included in the SAME write as the rest of the
+    // details — avoids the old "product saved, photo upload fails/timeouts
+    // separately" split-write problem.
+    const ref = doc(collection(db, 'products'));
+    if (file) data.imageUrl = await uploadProductImageFile(ref.id, file);
+    await setDoc(ref, data);
+    toast(file ? 'Product added with photo.' : 'Product added.');
+  });
+  $('pf-image-file').addEventListener('change', previewImage);
+});
+
+document.addEventListener('click', (e) => {
+  const editId = e.target.closest('[data-edit-product]')?.getAttribute('data-edit-product');
+  if (editId) {
+    const p = productsCache.find((x) => x.id === editId);
+    openModal('Edit Product', productFormHTML(p), async () => {
+      const file = $('pf-image-file').files[0];
+      const name = $('pf-name').value.trim();
+      const category = $('pf-category').value;
+      if (!name || !category) { toast('Name and category are required.'); throw new Error('validation'); }
+      const data = {
+        name,
+        description: $('pf-description').value.trim(),
+        category,
+        price: parseFloat($('pf-price').value) || 0,
+        restaurant: $('pf-restaurant').value.trim(),
+        rating: parseFloat($('pf-rating').value) || 4.5,
+        badge: $('pf-badge').value.trim(),
+        vegetarian: $('pf-vegetarian').checked,
+        active: $('pf-active').checked,
+        updatedAt: serverTimestamp(),
+      };
+      // Upload the new photo (if one was picked) BEFORE writing, so the
+      // image URL lands in the same update as every other field.
+      if (file) data.imageUrl = await uploadProductImageFile(editId, file);
+      await updateDoc(doc(db, 'products', editId), data);
+      if (file && p.imageUrl && p.imageUrl !== data.imageUrl) {
+        deleteObject(storageRef(storage, p.imageUrl)).catch(() => {}); // best-effort cleanup of old photo
+      }
+      toast(file ? 'Product updated with new photo.' : 'Product updated.');
+    });
+    $('pf-image-file').addEventListener('change', previewImage);
+  }
+  const delId = e.target.closest('[data-delete-product]')?.getAttribute('data-delete-product');
+  if (delId && confirmAction('Delete this product? This cannot be undone.')) {
+    const existing = productsCache.find((x) => x.id === delId);
+    deleteDoc(doc(db, 'products', delId))
+      .then(() => {
+        toast('Product deleted.');
+        if (existing?.imageUrl) deleteObject(storageRef(storage, existing.imageUrl)).catch(() => {}); // best-effort cleanup
+      })
+      .catch((err) => { toast('Delete failed.'); console.error(err); });
+  }
+});
+
+function previewImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const preview = $('pf-image-preview');
+  preview.src = URL.createObjectURL(file);
+  preview.classList.add('visible');
+}
+async function uploadProductImageFile(productId, file) {
+  const path = `product-images/${productId}-${Date.now()}-${file.name}`;
+  const ref = storageRef(storage, path);
+  await uploadBytes(ref, file);
+  return getDownloadURL(ref);
+}
+
+/* =========================================================
+   CATEGORIES
+   ========================================================= */
+function renderCategoriesTable() {
+  $('categories-table-body').innerHTML = categoriesCache.length === 0
+    ? `<tr class="empty-row"><td colspan="6">No categories yet — click "Add Category".</td></tr>`
+    : categoriesCache.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((c) => `
+      <tr>
+        <td style="font-size:18px;">${esc(c.emoji || '🍽️')}</td>
+        <td class="cell-name">${esc(c.name)}</td>
+        <td class="mono">${esc(c.filterKey)}</td>
+        <td class="mono">${c.order ?? 0}</td>
+        <td><span class="badge ${c.active !== false ? 'badge-active' : 'badge-inactive'}">${c.active !== false ? 'Active' : 'Hidden'}</span></td>
+        <td><button class="icon-btn" data-edit-category="${c.id}">✎</button><button class="icon-btn" data-delete-category="${c.id}">🗑</button></td>
+      </tr>`).join('');
+}
+function categoryFormHTML(c = {}) {
+  return `
+    <div class="form-row">
+      <div class="field"><label>Name</label><input id="cf-name" value="${esc(c.name || '')}" /></div>
+      <div class="field"><label>Emoji</label><input id="cf-emoji" value="${esc(c.emoji || '')}" maxlength="4" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Filter Key (slug, e.g. "pizza")</label><input id="cf-filterKey" value="${esc(c.filterKey || '')}" /></div>
+      <div class="field"><label>Order</label><input id="cf-order" type="number" value="${c.order ?? 0}" /></div>
+    </div>
+    <div class="checkbox-row"><input type="checkbox" id="cf-active" ${c.active !== false ? 'checked' : ''} /><label for="cf-active">Active (visible on storefront)</label></div>
+  `;
+}
+$('add-category-btn').addEventListener('click', () => {
+  openModal('Add Category', categoryFormHTML(), async () => {
+    const filterKey = $('cf-filterKey').value.trim().toLowerCase().replace(/\s+/g, '-');
+    const name = $('cf-name').value.trim();
+    if (!name || !filterKey) { toast('Name and filter key are required.'); throw new Error('validation'); }
+    await addDoc(collection(db, 'categories'), {
+      name, filterKey, emoji: $('cf-emoji').value.trim(), order: parseInt($('cf-order').value, 10) || 0,
+      active: $('cf-active').checked, createdAt: serverTimestamp(),
+    });
+    toast('Category added.');
+  });
+});
+document.addEventListener('click', (e) => {
+  const editId = e.target.closest('[data-edit-category]')?.getAttribute('data-edit-category');
+  if (editId) {
+    const c = categoriesCache.find((x) => x.id === editId);
+    openModal('Edit Category', categoryFormHTML(c), async () => {
+      const filterKey = $('cf-filterKey').value.trim().toLowerCase().replace(/\s+/g, '-');
+      await updateDoc(doc(db, 'categories', editId), {
+        name: $('cf-name').value.trim(), filterKey, emoji: $('cf-emoji').value.trim(),
+        order: parseInt($('cf-order').value, 10) || 0, active: $('cf-active').checked,
+      });
+      toast('Category updated.');
+    });
+  }
+  const delId = e.target.closest('[data-delete-category]')?.getAttribute('data-delete-category');
+  if (delId && confirmAction('Delete this category? Products using it will keep the old category text.')) {
+    deleteDoc(doc(db, 'categories', delId)).then(() => toast('Category deleted.'));
+  }
+});
+
+/* =========================================================
+   ORDERS
+   ========================================================= */
+let ordersCache = [];
+const STATUS_OPTIONS = ['Pending', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
+
+function statusSelectHTML(orderId, current) {
+  return `<select class="status-select" data-status-select="${orderId}">
+    ${STATUS_OPTIONS.map((s) => `<option value="${s}" ${s === current ? 'selected' : ''}>${s}</option>`).join('')}
+  </select>`;
+}
+function paymentMethodLabel(method) {
+  if (method === 'jazzcash') return 'JazzCash';
+  if (method === 'easypaisa') return 'Easypaisa';
+  if (method === 'cod') return 'Cash on Delivery';
+  return method || '—';
+}
+function paymentStatusBadgeClass(status) {
+  if (status === 'Payment Verified' || status === 'Cash on Delivery') return 'badge-active';
+  if (status === 'Payment Pending') return 'badge-pending';
+  return 'badge-inactive';
+}
+// Only Easypaisa / JazzCash orders need manual verification — Cash on Delivery
+// has nothing to verify, so no toggle button is shown for it.
+function paymentStatusCellHTML(o) {
+  const isOnlineWallet = o.paymentMethod === 'easypaisa' || o.paymentMethod === 'jazzcash';
+  const status = o.paymentStatus || (isOnlineWallet ? 'Payment Pending' : 'Cash on Delivery');
+  const badge = `<span class="badge ${paymentStatusBadgeClass(status)}">${esc(status)}</span>`;
+  if (!isOnlineWallet) return `<div class="cell-muted">${esc(paymentMethodLabel(o.paymentMethod))}</div>${badge}`;
+  const nextStatus = status === 'Payment Verified' ? 'Payment Pending' : 'Payment Verified';
+  const btnLabel = status === 'Payment Verified' ? 'Mark Pending' : 'Mark Verified';
+  return `<div class="cell-muted">${esc(paymentMethodLabel(o.paymentMethod))}</div>${badge}
+    <div style="margin-top:6px;"><button class="btn btn-outline btn-sm" data-toggle-payment-status="${o.id}" data-next-status="${nextStatus}">${btnLabel}</button></div>`;
+}
+function renderOrdersTable() {
+  const q = ($('orders-search').value || '').toLowerCase();
+  const statusFilter = $('orders-status-filter').value;
+  const rows = ordersCache.filter((o) =>
+    (!statusFilter || o.status === statusFilter) &&
+    (!q || (o.orderNumber || '').toLowerCase().includes(q) || (o.customer?.phone || '').includes(q) || (o.customer?.name || '').toLowerCase().includes(q))
+  );
+  $('orders-table-body').innerHTML = rows.length === 0
+    ? `<tr class="empty-row"><td colspan="8">No orders match your filters.</td></tr>`
+    : rows.map((o) => `
+      <tr>
+        <td class="mono cell-name" style="cursor:pointer;" data-open-order="${o.id}">${esc(o.orderNumber)}</td>
+        <td>${esc(o.customer?.name || '—')}</td>
+        <td class="mono">${esc(o.customer?.phone || '—')}</td>
+        <td class="mono">${money(o.total)}</td>
+        <td>${paymentStatusCellHTML(o)}</td>
+        <td>${statusSelectHTML(o.id, o.status)}</td>
+        <td class="cell-muted">${fmtDate(o.createdAt)}</td>
+        <td><button class="icon-btn" data-open-order="${o.id}">View</button> <button class="icon-btn" data-delete-order="${o.id}">🗑</button></td>
+      </tr>`).join('');
+}
+document.addEventListener('click', (e) => {
+  const delId = e.target.closest('[data-delete-order]')?.getAttribute('data-delete-order');
+  if (delId && confirmAction('Delete this order permanently? This cannot be undone.')) {
+    deleteDoc(doc(db, 'orders', delId)).then(() => toast('Order deleted.')).catch((err) => { toast('Delete failed.'); console.error(err); });
+  }
+  const payToggleId = e.target.closest('[data-toggle-payment-status]')?.getAttribute('data-toggle-payment-status');
+  if (payToggleId) {
+    const nextStatus = e.target.closest('[data-toggle-payment-status]').getAttribute('data-next-status');
+    updateDoc(doc(db, 'orders', payToggleId), { paymentStatus: nextStatus, updatedAt: serverTimestamp() })
+      .then(() => toast(`Payment marked "${nextStatus}".`))
+      .catch((err) => { toast('Could not update payment status.'); console.error(err); });
+  }
+});
+$('orders-search').addEventListener('input', renderOrdersTable);
+$('orders-status-filter').addEventListener('change', renderOrdersTable);
+
+/* ---------- Manual order creation (phone-in orders) ---------- */
+function manualOrderRowHTML(rowId) {
+  const opts = productsCache.filter((p) => p.active !== false)
+    .map((p) => `<option value="${p.id}" data-price="${p.price}">${esc(p.name)} — ${money(p.price)}</option>`).join('');
+  return `<div class="form-row" data-order-row="${rowId}" style="align-items:end;margin-bottom:8px;">
+    <div class="field" style="margin-bottom:0;"><label>Item</label><select class="mo-item">${opts || '<option value="">No active products</option>'}</select></div>
+    <div class="field" style="margin-bottom:0;max-width:90px;"><label>Qty</label><input class="mo-qty" type="number" min="1" value="1" /></div>
+  </div>`;
+}
+function manualOrderFormHTML() {
+  return `
+    <div class="form-row">
+      <div class="field"><label>Customer Name</label><input id="mo-name" /></div>
+      <div class="field"><label>Phone</label><input id="mo-phone" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>City</label><input id="mo-city" /></div>
+      <div class="field"><label>Address</label><input id="mo-address" /></div>
+    </div>
+    <div id="mo-items">${manualOrderRowHTML(0)}</div>
+    <button type="button" class="btn btn-outline btn-sm" id="mo-add-item" style="margin-bottom:14px;">+ Add Item</button>
+    <div class="field"><label>Payment Method</label>
+      <select id="mo-payment">
+        <option value="cod">Cash on Delivery</option>
+        <option value="easypaisa">EasyPaisa</option>
+        <option value="jazzcash">JazzCash</option>
+      </select>
+    </div>
+    <div class="cell-muted" style="margin-top:4px;">Tax and delivery are calculated from current Settings. Coupons aren't applied to manually created orders.</div>
+  `;
+}
+$('add-order-btn').addEventListener('click', () => {
+  let rowCount = 1;
+  openModal('Add Order (phone-in)', manualOrderFormHTML(), async () => {
+    const name = $('mo-name').value.trim();
+    const phone = $('mo-phone').value.trim();
+    if (!name || !phone) { toast('Customer name and phone are required.'); throw new Error('validation'); }
+    const items = [];
+    document.querySelectorAll('[data-order-row]').forEach((row) => {
+      const sel = row.querySelector('.mo-item');
+      const qty = parseInt(row.querySelector('.mo-qty').value, 10) || 0;
+      if (!sel.value || qty <= 0) return;
+      const price = parseFloat(sel.selectedOptions[0].getAttribute('data-price')) || 0;
+      const productName = sel.selectedOptions[0].textContent.split(' — ')[0];
+      items.push({ id: sel.value, name: productName, price, qty });
+    });
+    if (items.length === 0) { toast('Add at least one item.'); throw new Error('validation'); }
+    const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+    const delivery = subtotal >= (settingsCache.freeDeliveryThreshold ?? 25) ? 0 : (settingsCache.deliveryFee ?? 2.99);
+    const tax = subtotal * (settingsCache.taxRate ?? 0.08);
+    const total = subtotal + delivery + tax;
+    const orderNumber = `FH-${Math.floor(10000 + Math.random() * 89999)}`;
+    const moPaymentMethod = $('mo-payment').value;
+    await addDoc(collection(db, 'orders'), {
+      orderNumber,
+      customer: { name, phone, city: $('mo-city').value.trim(), address: $('mo-address').value.trim() },
+      items,
+      subtotal: round2(subtotal), discount: 0, delivery: round2(delivery), tax: round2(tax), total: round2(total),
+      couponCode: null, paymentMethod: moPaymentMethod,
+      paymentStatus: moPaymentMethod === 'cod' ? 'Cash on Delivery' : 'Payment Pending',
+      status: 'Pending',
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    });
+    const customerId = phone.replace(/[^0-9]/g, '');
+    if (customerId) {
+      const ref = doc(db, 'customers', customerId);
+      const existing = customersCache.find((c) => c.id === customerId);
+      await setDoc(ref, {
+        name, phone, city: $('mo-city').value.trim(), address: $('mo-address').value.trim(),
+        ordersCount: (existing?.ordersCount || 0) + 1, totalSpent: round2((existing?.totalSpent || 0) + total),
+        createdAt: existing ? existing.createdAt : serverTimestamp(), lastOrderAt: serverTimestamp(),
+      }, { merge: true });
+    }
+    toast('Order created.');
+  });
+  document.getElementById('mo-add-item').addEventListener('click', () => {
+    document.getElementById('mo-items').insertAdjacentHTML('beforeend', manualOrderRowHTML(rowCount));
+    rowCount += 1;
+  });
+});
+function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+
+
+document.addEventListener('change', (e) => {
+  const orderId = e.target.getAttribute?.('data-status-select');
+  if (orderId) {
+    updateDoc(doc(db, 'orders', orderId), { status: e.target.value, updatedAt: serverTimestamp() })
+      .then(() => toast(`Order status updated to "${e.target.value}".`))
+      .catch((err) => { toast('Could not update status.'); console.error(err); });
+  }
+});
+
+let openDrawerOrderId = null;
+function openOrderDrawer(orderId) {
+  const o = ordersCache.find((x) => x.id === orderId);
+  if (!o) return;
+  openDrawerOrderId = orderId;
+  $('order-drawer-title').textContent = `Order ${o.orderNumber}`;
+  $('order-drawer-body').innerHTML = `
+    <div class="drawer-section">
+      <h4>Status</h4>
+      ${statusSelectHTML(o.id, o.status)}
+    </div>
+    <div class="drawer-section">
+      <h4>Customer</h4>
+      <div>${esc(o.customer?.name || '—')}</div>
+      <div class="cell-muted mono">${esc(o.customer?.phone || '—')}</div>
+      <div class="cell-muted">${esc(o.customer?.city || '')} · ${esc(o.customer?.address || '')}</div>
+    </div>
+    <div class="drawer-section">
+      <h4>Items</h4>
+      ${(o.items || []).map((i) => `<div class="order-item-row"><span>${i.qty} × ${esc(i.name)}</span><span class="mono">${money(i.price * i.qty)}</span></div>`).join('')}
+      <div class="order-item-row"><span>Subtotal</span><span class="mono">${money(o.subtotal)}</span></div>
+      ${o.discount ? `<div class="order-item-row"><span>Discount (${esc(o.couponCode || '')})</span><span class="mono">−${money(o.discount)}</span></div>` : ''}
+      <div class="order-item-row"><span>Delivery</span><span class="mono">${o.delivery === 0 ? 'FREE' : money(o.delivery)}</span></div>
+      <div class="order-item-row"><span>Tax</span><span class="mono">${money(o.tax)}</span></div>
+      <div class="order-total-row"><span>Total</span><span class="mono">${money(o.total)}</span></div>
+    </div>
+    <div class="drawer-section">
+      <h4>Payment</h4>
+      ${paymentStatusCellHTML(o)}
+    </div>
+    <div class="drawer-section">
+      <h4>Placed</h4>
+      <div class="cell-muted">${fmtDate(o.createdAt)}</div>
+    </div>
+  `;
+  $('order-drawer').classList.add('open');
+  $('order-drawer-overlay').classList.add('visible');
+}
+document.addEventListener('click', (e) => {
+  const id = e.target.closest('[data-open-order]')?.getAttribute('data-open-order');
+  if (id) openOrderDrawer(id);
+});
+$('order-drawer-close').addEventListener('click', closeOrderDrawer);
+$('order-drawer-overlay').addEventListener('click', closeOrderDrawer);
+function closeOrderDrawer() { $('order-drawer').classList.remove('open'); $('order-drawer-overlay').classList.remove('visible'); openDrawerOrderId = null; }
+
+/* =========================================================
+   CUSTOMERS
+   ========================================================= */
+let customersCache = [];
+function normalizePhoneForId(phone) { return String(phone || '').replace(/[^0-9]/g, ''); }
+
+function renderCustomersTable() {
+  const q = ($('customers-search').value || '').toLowerCase();
+  const rows = customersCache.filter((c) => !q || (c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q));
+  $('customers-table-body').innerHTML = rows.length === 0
+    ? `<tr class="empty-row"><td colspan="7">No customers yet — they're created automatically when an order is placed, or click "Add Customer".</td></tr>`
+    : rows.map((c) => `
+      <tr>
+        <td class="cell-name">${esc(c.name)}</td>
+        <td class="mono">${esc(c.phone)}</td>
+        <td>${esc(c.city || '—')}</td>
+        <td class="mono">${c.ordersCount || 0}</td>
+        <td class="mono">${money(c.totalSpent)}</td>
+        <td class="cell-muted">${fmtDate(c.lastOrderAt)}</td>
+        <td><button class="icon-btn" data-edit-customer="${c.id}">✎</button><button class="icon-btn" data-delete-customer="${c.id}">🗑</button></td>
+      </tr>`).join('');
+}
+$('customers-search').addEventListener('input', renderCustomersTable);
+
+function customerFormHTML(c = {}, phoneEditable = true) {
+  return `
+    <div class="form-row">
+      <div class="field"><label>Name</label><input id="cuf-name" value="${esc(c.name || '')}" /></div>
+      <div class="field"><label>Phone</label><input id="cuf-phone" value="${esc(c.phone || '')}" ${phoneEditable ? '' : 'disabled'} /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>City</label><input id="cuf-city" value="${esc(c.city || '')}" /></div>
+      <div class="field"><label>Address</label><input id="cuf-address" value="${esc(c.address || '')}" /></div>
+    </div>
+    <div class="field"><label>Total Spent (USD)</label><input id="cuf-totalSpent" type="number" step="0.01" value="${c.totalSpent ?? 0}" /></div>
+    <div class="cell-muted">Orders Count updates automatically as this customer places real orders.</div>
+  `;
+}
+$('add-customer-btn').addEventListener('click', () => {
+  openModal('Add Customer', customerFormHTML(), async () => {
+    const phone = $('cuf-phone').value.trim();
+    const name = $('cuf-name').value.trim();
+    const id = normalizePhoneForId(phone);
+    if (!name || !id) { toast('Name and a valid phone number are required.'); throw new Error('validation'); }
+    await setDoc(doc(db, 'customers', id), {
+      name, phone, city: $('cuf-city').value.trim(), address: $('cuf-address').value.trim(),
+      totalSpent: parseFloat($('cuf-totalSpent').value) || 0, ordersCount: 0,
+      createdAt: serverTimestamp(), lastOrderAt: serverTimestamp(),
+    }, { merge: true });
+    toast('Customer added.');
+  });
+});
+document.addEventListener('click', (e) => {
+  const editId = e.target.closest('[data-edit-customer]')?.getAttribute('data-edit-customer');
+  if (editId) {
+    const c = customersCache.find((x) => x.id === editId);
+    openModal('Edit Customer', customerFormHTML(c, false), async () => {
+      await updateDoc(doc(db, 'customers', editId), {
+        name: $('cuf-name').value.trim(), city: $('cuf-city').value.trim(),
+        address: $('cuf-address').value.trim(), totalSpent: parseFloat($('cuf-totalSpent').value) || 0,
+      });
+      toast('Customer updated.');
+    });
+  }
+  const delId = e.target.closest('[data-delete-customer]')?.getAttribute('data-delete-customer');
+  if (delId && confirmAction('Delete this customer record? Their past orders are not affected.')) {
+    deleteDoc(doc(db, 'customers', delId)).then(() => toast('Customer deleted.')).catch((err) => { toast('Delete failed.'); console.error(err); });
+  }
+});
+
+/* =========================================================
+   COUPONS
+   ========================================================= */
+let couponsCache = [];
+function renderCouponsTable() {
+  $('coupons-table-body').innerHTML = couponsCache.length === 0
+    ? `<tr class="empty-row"><td colspan="6">No coupons yet — click "Add Coupon".</td></tr>`
+    : couponsCache.map((c) => `
+      <tr>
+        <td class="mono cell-name">${esc(c.id)}</td>
+        <td>${esc(c.type)}</td>
+        <td class="mono">${c.type === 'percent' ? `${c.value}%` : c.type === 'flat' ? money(c.value) : '—'}</td>
+        <td class="mono">${money(c.minSubtotal)}</td>
+        <td><span class="badge ${c.active !== false ? 'badge-active' : 'badge-inactive'}">${c.active !== false ? 'Active' : 'Disabled'}</span></td>
+        <td><button class="icon-btn" data-edit-coupon="${c.id}">✎</button><button class="icon-btn" data-delete-coupon="${c.id}">🗑</button></td>
+      </tr>`).join('');
+}
+function couponFormHTML(c = {}, codeEditable = true) {
+  return `
+    <div class="form-row">
+      <div class="field"><label>Code</label><input id="cpf-code" value="${esc(c.id || '')}" ${codeEditable ? '' : 'disabled'} style="text-transform:uppercase;" /></div>
+      <div class="field"><label>Type</label>
+        <select id="cpf-type">
+          <option value="percent" ${c.type === 'percent' ? 'selected' : ''}>Percent off</option>
+          <option value="flat" ${c.type === 'flat' ? 'selected' : ''}>Flat amount off</option>
+          <option value="freeship" ${c.type === 'freeship' ? 'selected' : ''}>Free delivery</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Value (% or $, ignored for free delivery)</label><input id="cpf-value" type="number" step="0.01" value="${c.value ?? 0}" /></div>
+      <div class="field"><label>Minimum Subtotal</label><input id="cpf-minSubtotal" type="number" step="0.01" value="${c.minSubtotal ?? 0}" /></div>
+    </div>
+    <div class="field"><label>Label (shown to customer)</label><input id="cpf-label" value="${esc(c.label || '')}" /></div>
+    <div class="checkbox-row"><input type="checkbox" id="cpf-active" ${c.active !== false ? 'checked' : ''} /><label for="cpf-active">Active</label></div>
+  `;
+}
+$('add-coupon-btn').addEventListener('click', () => {
+  openModal('Add Coupon', couponFormHTML(), async () => {
+    const code = $('cpf-code').value.trim().toUpperCase();
+    if (!code) { toast('Code is required.'); throw new Error('validation'); }
+    await setDoc(doc(db, 'coupons', code), {
+      type: $('cpf-type').value, value: parseFloat($('cpf-value').value) || 0,
+      minSubtotal: parseFloat($('cpf-minSubtotal').value) || 0, label: $('cpf-label').value.trim(),
+      active: $('cpf-active').checked, createdAt: serverTimestamp(),
+    });
+    toast('Coupon added.');
+  });
+});
+document.addEventListener('click', (e) => {
+  const editId = e.target.closest('[data-edit-coupon]')?.getAttribute('data-edit-coupon');
+  if (editId) {
+    const c = couponsCache.find((x) => x.id === editId);
+    openModal('Edit Coupon', couponFormHTML(c, false), async () => {
+      await setDoc(doc(db, 'coupons', editId), {
+        type: $('cpf-type').value, value: parseFloat($('cpf-value').value) || 0,
+        minSubtotal: parseFloat($('cpf-minSubtotal').value) || 0, label: $('cpf-label').value.trim(),
+        active: $('cpf-active').checked,
+      }, { merge: true });
+      toast('Coupon updated.');
+    });
+  }
+  const delId = e.target.closest('[data-delete-coupon]')?.getAttribute('data-delete-coupon');
+  if (delId && confirmAction('Delete this coupon?')) {
+    deleteDoc(doc(db, 'coupons', delId)).then(() => toast('Coupon deleted.'));
+  }
+});
+
+/* =========================================================
+   REVIEWS
+   ========================================================= */
+let reviewsCache = [];
+function renderReviewsTable() {
+  const q = ($('reviews-search').value || '').toLowerCase();
+  const rows = reviewsCache.filter((r) => !q || (r.name || '').toLowerCase().includes(q) || (r.comment || '').toLowerCase().includes(q) || (r.productId || '').toLowerCase().includes(q));
+  $('reviews-table-body').innerHTML = rows.length === 0
+    ? `<tr class="empty-row"><td colspan="6">No reviews yet.</td></tr>`
+    : rows.map((r) => `
+      <tr>
+        <td class="mono cell-muted">${esc(r.productId)}</td>
+        <td class="cell-name">${esc(r.name)}</td>
+        <td class="mono">★ ${r.rating}</td>
+        <td>${esc((r.comment || '').slice(0, 90))}${(r.comment || '').length > 90 ? '…' : ''}</td>
+        <td><span class="badge ${r.approved !== false ? 'badge-active' : 'badge-inactive'}">${r.approved !== false ? 'Approved' : 'Hidden'}</span></td>
+        <td><button class="icon-btn" data-edit-review="${r.id}">✎</button> <button class="icon-btn" data-toggle-review="${r.id}">${r.approved !== false ? 'Hide' : 'Approve'}</button> <button class="icon-btn" data-delete-review="${r.id}">🗑</button></td>
+      </tr>`).join('');
+}
+$('reviews-search').addEventListener('input', renderReviewsTable);
+function reviewFormHTML(r = {}) {
+  return `
+    <div class="field"><label>Name</label><input id="rvf-name" value="${esc(r.name || '')}" /></div>
+    <div class="field"><label>Rating (1–5)</label><input id="rvf-rating" type="number" min="1" max="5" value="${r.rating ?? 5}" /></div>
+    <div class="field"><label>Comment</label><textarea id="rvf-comment" rows="3">${esc(r.comment || '')}</textarea></div>
+  `;
+}
+document.addEventListener('click', (e) => {
+  const editId = e.target.closest('[data-edit-review]')?.getAttribute('data-edit-review');
+  if (editId) {
+    const r = reviewsCache.find((x) => x.id === editId);
+    openModal('Edit Review', reviewFormHTML(r), async () => {
+      await updateDoc(doc(db, 'reviews', editId), {
+        name: $('rvf-name').value.trim(),
+        rating: Math.max(1, Math.min(5, parseInt($('rvf-rating').value, 10) || 5)),
+        comment: $('rvf-comment').value.trim(),
+      });
+      toast('Review updated.');
+    });
+  }
+  const toggleId = e.target.closest('[data-toggle-review]')?.getAttribute('data-toggle-review');
+  if (toggleId) {
+    const r = reviewsCache.find((x) => x.id === toggleId);
+    updateDoc(doc(db, 'reviews', toggleId), { approved: !(r.approved !== false) }).then(() => toast('Review updated.'));
+  }
+  const delId = e.target.closest('[data-delete-review]')?.getAttribute('data-delete-review');
+  if (delId && confirmAction('Delete this review?')) {
+    deleteDoc(doc(db, 'reviews', delId)).then(() => toast('Review deleted.'));
+  }
+});
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+let settingsCache = { storeName: 'FoodHub Pro', currencySymbol: 'Rs ', taxRate: 0.08, deliveryFee: 2.99, freeDeliveryThreshold: 25 };
+let settingsFormPopulated = false;
+function populateSettingsForm(s) {
+  $('set-storeName').value = s.storeName || 'FoodHub Pro';
+  $('set-currencySymbol').value = s.currencySymbol || 'Rs ';
+  $('set-taxRate').value = s.taxRate ?? 0.08;
+  $('set-deliveryFee').value = s.deliveryFee ?? 2.99;
+  $('set-freeDeliveryThreshold').value = s.freeDeliveryThreshold ?? 25;
+  $('set-supportNote').value = s.supportNote || '';
+  $('set-maintenanceMode').checked = !!s.maintenanceMode;
+}
+$('settings-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('settings-msg').textContent = '';
+  try {
+    await setDoc(doc(db, 'settings', 'site'), {
+      storeName: $('set-storeName').value.trim(),
+      currencySymbol: $('set-currencySymbol').value.trim() || 'Rs ',
+      taxRate: parseFloat($('set-taxRate').value) || 0,
+      deliveryFee: parseFloat($('set-deliveryFee').value) || 0,
+      freeDeliveryThreshold: parseFloat($('set-freeDeliveryThreshold').value) || 0,
+      supportNote: $('set-supportNote').value.trim(),
+      maintenanceMode: $('set-maintenanceMode').checked,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    $('settings-msg').textContent = 'Saved.';
+    $('settings-msg').style.color = 'var(--herb)';
+    toast('Settings saved.');
+  } catch (err) {
+    $('settings-msg').textContent = 'Save failed.';
+    $('settings-msg').style.color = 'var(--chili)';
+    console.error(err);
+  }
+});
+
+/* =========================================================
+   PAYMENT MANAGEMENT
+   ---------------------------------------------------------
+   Lives in the SAME "settings/site" Firestore doc as the rest of the
+   storefront config, so it rides the same live listener — a toggle or
+   QR upload here updates the checkout page instantly, with no separate
+   collection or extra round trip needed.
+   ========================================================= */
+let paymentsFormPopulated = false;
+function populatePaymentsForm(s) {
+  $('pm-easypaisa-enabled').checked = s.easypaisaEnabled !== false;
+  $('pm-easypaisa-title').value = s.easypaisaAccountTitle || '';
+  $('pm-easypaisa-number').value = s.easypaisaNumber || '';
+  if (s.easypaisaQrUrl) { $('pm-easypaisa-qr-preview').src = s.easypaisaQrUrl; $('pm-easypaisa-qr-preview').classList.add('visible'); }
+
+  $('pm-jazzcash-enabled').checked = s.jazzcashEnabled !== false;
+  $('pm-jazzcash-title').value = s.jazzcashAccountTitle || '';
+  $('pm-jazzcash-number').value = s.jazzcashNumber || '';
+  if (s.jazzcashQrUrl) { $('pm-jazzcash-qr-preview').src = s.jazzcashQrUrl; $('pm-jazzcash-qr-preview').classList.add('visible'); }
+
+  $('pm-cod-enabled').checked = s.codEnabled !== false;
+}
+function wireQrPreview(fileInputId, previewId) {
+  $(fileInputId).addEventListener('change', () => {
+    const file = $(fileInputId).files[0];
+    if (!file) return;
+    const preview = $(previewId);
+    preview.src = URL.createObjectURL(file);
+    preview.classList.add('visible');
+  });
+}
+wireQrPreview('pm-easypaisa-qr-file', 'pm-easypaisa-qr-preview');
+wireQrPreview('pm-jazzcash-qr-file', 'pm-jazzcash-qr-preview');
+
+async function uploadQrCode(method, file) {
+  const path = `payment-qr/${method}-${Date.now()}-${file.name}`;
+  const ref = storageRef(storage, path);
+  await uploadBytes(ref, file);
+  return getDownloadURL(ref);
+}
+
+$('payments-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('payments-msg').textContent = '';
+  $('payments-save-btn').disabled = true;
+  try {
+    const update = {
+      easypaisaEnabled: $('pm-easypaisa-enabled').checked,
+      easypaisaAccountTitle: $('pm-easypaisa-title').value.trim(),
+      easypaisaNumber: $('pm-easypaisa-number').value.trim(),
+      jazzcashEnabled: $('pm-jazzcash-enabled').checked,
+      jazzcashAccountTitle: $('pm-jazzcash-title').value.trim(),
+      jazzcashNumber: $('pm-jazzcash-number').value.trim(),
+      codEnabled: $('pm-cod-enabled').checked,
+      updatedAt: serverTimestamp(),
+    };
+    const easypaisaFile = $('pm-easypaisa-qr-file').files[0];
+    if (easypaisaFile) update.easypaisaQrUrl = await uploadQrCode('easypaisa', easypaisaFile);
+    const jazzcashFile = $('pm-jazzcash-qr-file').files[0];
+    if (jazzcashFile) update.jazzcashQrUrl = await uploadQrCode('jazzcash', jazzcashFile);
+
+    await setDoc(doc(db, 'settings', 'site'), update, { merge: true });
+    $('pm-easypaisa-qr-file').value = '';
+    $('pm-jazzcash-qr-file').value = '';
+    $('payments-msg').textContent = 'Saved.';
+    $('payments-msg').style.color = 'var(--herb)';
+    toast('Payment settings saved — live on the storefront now.');
+  } catch (err) {
+    $('payments-msg').textContent = 'Save failed.';
+    $('payments-msg').style.color = 'var(--chili)';
+    console.error(err);
+  }
+  $('payments-save-btn').disabled = false;
+});
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard() {
+  const now = new Date();
+  const todayKey = now.toDateString();
+  const todaysOrders = ordersCache.filter((o) => {
+    const d = o.createdAt?.toDate ? o.createdAt.toDate() : (o.createdAt ? new Date(o.createdAt) : null);
+    return d && d.toDateString() === todayKey;
+  });
+  $('stat-orders-today').textContent = todaysOrders.length;
+  $('stat-orders-pending').textContent = ordersCache.filter((o) => o.status === 'Pending').length;
+  $('stat-revenue-today').textContent = money(todaysOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0));
+  $('stat-products').textContent = productsCache.length;
+  $('stat-customers').textContent = customersCache.length;
+
+  const recent = ordersCache.slice(0, 8);
+  $('dashboard-recent-orders').innerHTML = recent.length === 0
+    ? `<tr class="empty-row"><td colspan="6">No orders yet.</td></tr>`
+    : recent.map((o) => `
+      <tr>
+        <td class="mono">${esc(o.orderNumber)}</td>
+        <td>${esc(o.customer?.name || '—')}</td>
+        <td class="cell-muted">${(o.items || []).length} item${(o.items || []).length === 1 ? '' : 's'}</td>
+        <td class="mono">${money(o.total)}</td>
+        <td><span class="badge ${statusBadgeClass(o.status)}">${esc(o.status)}</span></td>
+        <td class="cell-muted">${fmtDate(o.createdAt)}</td>
+      </tr>`).join('');
+}
+
+/* =========================================================
+   LIVE LISTENERS (started only after admin auth confirmed)
+   ========================================================= */
+function startListeners() {
+  unsubscribers.push(onSnapshot(collection(db, 'products'), (snap) => {
+    productsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderProductsTable(); renderDashboard();
+  }));
+  unsubscribers.push(onSnapshot(collection(db, 'categories'), (snap) => {
+    categoriesCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderCategoriesTable();
+  }));
+  unsubscribers.push(onSnapshot(query(collection(db, 'orders'), orderBy('createdAt', 'desc')), (snap) => {
+    ordersCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderOrdersTable(); renderDashboard();
+    if (openDrawerOrderId) openOrderDrawer(openDrawerOrderId);
+  }, (err) => console.warn('orders listener error (needs an index the first time — Firestore will log a console link to auto-create it):', err)));
+  unsubscribers.push(onSnapshot(collection(db, 'customers'), (snap) => {
+    customersCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderCustomersTable(); renderDashboard();
+  }));
+  unsubscribers.push(onSnapshot(collection(db, 'coupons'), (snap) => {
+    couponsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderCouponsTable();
+  }));
+  unsubscribers.push(onSnapshot(collection(db, 'reviews'), (snap) => {
+    reviewsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderReviewsTable();
+  }));
+  unsubscribers.push(onSnapshot(doc(db, 'settings', 'site'), (snap) => {
+    settingsCache = snap.exists() ? { ...settingsCache, ...snap.data() } : settingsCache;
+    ADMIN_CURRENCY = settingsCache.currencySymbol || 'Rs ';
+    if (!settingsFormPopulated) { populateSettingsForm(settingsCache); settingsFormPopulated = true; }
+    if (!paymentsFormPopulated) { populatePaymentsForm(settingsCache); paymentsFormPopulated = true; }
+    renderProductsTable(); renderOrdersTable(); renderCustomersTable(); renderCouponsTable(); renderDashboard();
+  }));
+}
+</script>
+</body>
+</html>
