@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Aura PizzaaBurger — Admin Panel</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-mark">A</div>
+      <div class="login-brand-name">THE AURA PIZZAABURGER</div>
+    </div>
+    <p class="login-sub">Luxury Admin Portal — sign in with your admin account.</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" autocomplete="current-password" required />
+      </div>
+      <p class="field-error" id="login-error"></p>
+      <button type="submit" class="btn btn-primary btn-block" id="login-submit">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= ACCESS CHECK SCREEN ================= -->
+<!-- Shown instead of silently signing out when Firebase Auth succeeds but
+     the admins/{uid} authorization check fails or errors — so the real
+     cause (and the exact UID needed to fix it) is never hidden. -->
+<div id="access-check-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 20%,rgba(178,58,58,.1),transparent 45%),var(--bg);">
+  <div class="login-card" style="max-width:440px;">
+    <div class="login-brand">
+      <div class="login-brand-mark" style="background:var(--chili);">!</div>
+      <div class="login-brand-name">ACCESS CHECK</div>
+    </div>
+    <p class="login-sub" id="access-check-title">We couldn't verify admin access for this account.</p>
+    <p class="field-error" id="access-check-detail" style="margin-bottom:14px;"></p>
+    <div class="field">
+      <label>Signed in as</label>
+      <input type="text" id="access-check-email" readonly style="font-family:var(--font-mono);" />
+    </div>
+    <div class="field">
+      <label>Your UID (needed to authorize this account)</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="access-check-uid" readonly style="font-family:var(--font-mono);flex:1;" />
+        <button type="button" class="btn btn-outline btn-sm" id="access-check-copy-btn">Copy</button>
+      </div>
+    </div>
+    <p class="cell-muted" style="margin:10px 0 16px;">
+      In Firebase Console → Firestore → <strong>admins</strong> collection, add a document whose ID is exactly the UID above. See SETUP.md, step 5.
+    </p>
+    <div style="display:flex;gap:10px;">
+      <button type="button" class="btn btn-outline" id="access-check-retry-btn" style="flex:1;">Retry</button>
+      <button type="button" class="btn btn-primary" id="access-check-signout-btn" style="flex:1;">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="login-brand-mark">A</div>
+      <div class="login-brand-name" style="font-size:12.5px;line-height:1.35;">THE AURA<br /><span style="color:var(--text-muted);font-size:10px;letter-spacing:.12em;font-weight:500;font-family:var(--font-body);">PIZZAABURGER ADMIN</span></div>
+    </div>
+    <button class="nav-item active" data-view="dashboard"><span class="ic">▤</span> Dashboard</button>
+    <button class="nav-item" data-view="products"><span class="ic">🍔</span> Products</button>
+    <button class="nav-item" data-view="categories"><span class="ic">🗂</span> Categories</button>
+    <button class="nav-item" data-view="homepage-sections"><span class="ic">🏠</span> Homepage Sections</button>
+    <button class="nav-item" data-view="orders"><span class="ic">🧾</span> Orders</button>
+    <button class="nav-item" data-view="payments"><span class="ic">💳</span> Payment Management</button>
+    <button class="nav-item" data-view="customers"><span class="ic">👤</span> Customers</button>
+    <button class="nav-item" data-view="users"><span class="ic">🔐</span> Users</button>
+    <button class="nav-item" data-view="coupons"><span class="ic">🏷</span> Coupons</button>
+    <button class="nav-item" data-view="reviews"><span class="ic">★</span> Reviews</button>
+    <button class="nav-item" data-view="settings"><span class="ic">⚙</span> Website Settings</button>
+    <div class="sidebar-footer">
+      <div class="admin-email" id="admin-email"></div>
+      <button class="nav-item" id="logout-btn"><span class="ic">↩</span> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <button class="hamburger-mobile btn btn-outline btn-sm" id="mobile-menu-btn" style="margin-bottom:16px;">☰ Menu</button>
+
+    <!-- ---- Dashboard ---- -->
+    <section class="view active" id="view-dashboard">
+      <div class="topbar"><div><div class="page-title">Dashboard</div><div class="page-sub">Live snapshot of your store, updated in real time.</div></div></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Orders Today</div><div class="stat-value zest" id="stat-orders-today">0</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Orders</div><div class="stat-value chili" id="stat-orders-pending">0</div></div>
+        <div class="stat-card"><div class="stat-label">Revenue Today</div><div class="stat-value herb" id="stat-revenue-today">Rs 0.00</div></div>
+        <div class="stat-card"><div class="stat-label">Total Products</div><div class="stat-value" id="stat-products">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Customers</div><div class="stat-value" id="stat-customers">0</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Recent Orders</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
+          <tbody id="dashboard-recent-orders"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Products ---- -->
+    <section class="view" id="view-products">
+      <div class="topbar">
+        <div><div class="page-title">Products</div><div class="page-sub">Changes here appear on the storefront instantly.</div></div>
+        <button class="btn btn-primary" id="add-product-btn">+ Add Product</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Products</h3>
+          <input class="search-input" id="products-search" placeholder="Search products…" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Rating</th><th>Status</th><th></th></tr></thead>
+          <tbody id="products-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Categories ---- -->
+    <section class="view" id="view-categories">
+      <div class="topbar">
+        <div><div class="page-title">Categories</div><div class="page-sub">Controls the category buttons and product filters on the storefront.</div></div>
+        <button class="btn btn-primary" id="add-category-btn">+ Add Category</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>All Categories</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Emoji</th><th>Name</th><th>Filter Key</th><th>Order</th><th>Status</th><th></th></tr></thead>
+          <tbody id="categories-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Homepage Sections ---- -->
+    <section class="view" id="view-homepage-sections">
+      <div class="topbar">
+        <div><div class="page-title">Homepage Sections</div><div class="page-sub">Control which rails appear on the storefront homepage, their order, and which products show in each — no code changes needed.</div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-outline" id="seed-sections-btn">Add Default Sections</button>
+          <button class="btn btn-primary" id="add-section-btn">+ Add Section</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>All Sections</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Order</th><th>Icon</th><th>Title</th><th>Key</th><th>Source</th><th>Products</th><th>Status</th><th></th></tr></thead>
+          <tbody id="sections-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Orders ---- -->
+    <section class="view" id="view-orders">
+      <div class="topbar">
+        <div><div class="page-title">Orders</div><div class="page-sub">Update order status — customers see live tracking status changes.</div></div>
+        <button class="btn btn-primary" id="add-order-btn">+ Add Order (phone-in)</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Orders</h3>
+          <div class="filter-row">
+            <input class="search-input" id="orders-search" placeholder="Search order # or phone…" />
+            <select class="search-input" id="orders-status-filter">
+              <option value="">All statuses</option>
+              <option>Pending</option><option>Preparing</option><option>Out for Delivery</option><option>Delivered</option><option>Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th><th></th></tr></thead>
+          <tbody id="orders-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Payment Management ---- -->
+    <section class="view" id="view-payments">
+      <div class="topbar">
+        <div><div class="page-title">Payment Management</div><div class="page-sub">Controls which payment methods appear at checkout — changes go live on the storefront instantly.</div></div>
+      </div>
+      <form id="payments-form">
+
+        <div class="payment-card" id="pm-card-easypaisa">
+          <div class="payment-card-head">
+            <div class="payment-card-title"><span class="payment-card-mark payment-mark-easypaisa">E</span> EasyPaisa</div>
+            <label class="toggle-switch"><input type="checkbox" id="pm-easypaisa-enabled" checked /><span class="toggle-slider"></span></label>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Account Holder Name</label><input id="pm-easypaisa-title" placeholder="e.g. The Aura PizzaaBurger" /></div>
+            <div class="field"><label>Account / Mobile Number</label><input id="pm-easypaisa-number" placeholder="e.g. 0300 1234567" /></div>
+          </div>
+          <div class="field">
+            <label>QR Code</label>
+            <img class="payment-qr-preview" id="pm-easypaisa-qr-preview" />
+            <input type="file" id="pm-easypaisa-qr-file" accept="image/*" />
+            <div class="cell-muted" style="margin-top:6px;">Leave empty to keep the current QR code.</div>
+          </div>
+        </div>
+
+        <div class="payment-card" id="pm-card-jazzcash">
+          <div class="payment-card-head">
+            <div class="payment-card-title"><span class="payment-card-mark payment-mark-jazzcash">J</span> JazzCash</div>
+            <label class="toggle-switch"><input type="checkbox" id="pm-jazzcash-enabled" checked /><span class="toggle-slider"></span></label>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Account Holder Name</label><input id="pm-jazzcash-title" placeholder="e.g. The Aura PizzaaBurger" /></div>
+            <div class="field"><label>Account / Mobile Number</label><input id="pm-jazzcash-number" placeholder="e.g. 0300 7654321" /></div>
+          </div>
+          <div class="field">
+            <label>QR Code</label>
+            <img class="payment-qr-preview" id="pm-jazzcash-qr-preview" />
+            <input type="file" id="pm-jazzcash-qr-file" accept="image/*" />
+            <div class="cell-muted" style="margin-top:6px;">Leave empty to keep the current QR code.</div>
+          </div>
+        </div>
+
+        <div class="payment-card" id="pm-card-cod">
+          <div class="payment-card-head">
+            <div class="payment-card-title"><span class="payment-card-mark payment-mark-cod">₨</span> Cash on Delivery</div>
+            <label class="toggle-switch"><input type="checkbox" id="pm-cod-enabled" checked /><span class="toggle-slider"></span></label>
+          </div>
+          <div class="cell-muted">No account details needed — customers pay in cash when the order arrives.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="payments-save-btn">Save Payment Settings</button>
+        <span class="field-error" id="payments-msg" style="margin-left:10px;"></span>
+      </form>
+    </section>
+
+    <!-- ---- Customers ---- -->
+    <section class="view" id="view-customers">
+      <div class="topbar">
+        <div><div class="page-title">Customers</div><div class="page-sub">Built automatically from checkout data — also fully editable here.</div></div>
+        <button class="btn btn-primary" id="add-customer-btn">+ Add Customer</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Customers</h3>
+          <input class="search-input" id="customers-search" placeholder="Search name or phone…" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Name</th><th>Phone</th><th>City</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th></th></tr></thead>
+          <tbody id="customers-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Users (Firebase Auth accounts) ---- -->
+    <section class="view" id="view-users">
+      <div class="topbar">
+        <div><div class="page-title">Users</div><div class="page-sub">Signed-in customer accounts (Firebase Authentication). Distinct from the guest-checkout Customers list.</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Users</h3>
+          <div class="filter-row">
+            <input class="search-input" id="users-search" placeholder="Search name or email…" />
+            <select class="search-input" id="users-verified-filter">
+              <option value="">All verification statuses</option>
+              <option value="verified">Email verified</option>
+              <option value="unverified">Email unverified</option>
+            </select>
+            <select class="search-input" id="users-status-filter">
+              <option value="">All account statuses</option>
+              <option value="enabled">Enabled</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+        </div>
+        <div class="cell-muted" style="padding:10px 16px 0;">
+          "Disable" blocks sign-in and checkout inside this app (enforced by the storefront and Firestore rules) — it does not use Firebase's server-side account-disable, since that requires the Admin SDK / a paid Cloud Functions plan. A disabled user's Firebase Auth credentials still technically exist.
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Email Verified</th><th>Created</th><th>Last Login</th><th>Orders</th><th>Total Spent</th><th>Status</th><th></th></tr></thead>
+          <tbody id="users-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Coupons ---- -->
+    <section class="view" id="view-coupons">
+      <div class="topbar">
+        <div><div class="page-title">Coupons</div><div class="page-sub">Applied live in the storefront cart.</div></div>
+        <button class="btn btn-primary" id="add-coupon-btn">+ Add Coupon</button>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>All Coupons</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min Subtotal</th><th>Status</th><th></th></tr></thead>
+          <tbody id="coupons-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Reviews ---- -->
+    <section class="view" id="view-reviews">
+      <div class="topbar"><div><div class="page-title">Reviews</div><div class="page-sub">Moderate reviews submitted from product Quick View.</div></div></div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>All Reviews</h3>
+          <input class="search-input" id="reviews-search" placeholder="Search reviews…" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Product ID</th><th>Name</th><th>Rating</th><th>Comment</th><th>Status</th><th></th></tr></thead>
+          <tbody id="reviews-table-body"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ---- Settings ---- -->
+    <section class="view" id="view-settings">
+      <div class="topbar"><div><div class="page-title">Website Settings</div><div class="page-sub">Global storefront configuration.</div></div></div>
+
+      <!-- ---- Logo Manager ---- -->
+      <div class="panel" style="margin-bottom:20px;">
+        <div class="panel-head"><h3>Logo Manager</h3></div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="field">
+              <label>Current Logo</label>
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div style="width:88px;height:88px;border-radius:14px;background:rgba(0,0,0,.35);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                  <img id="logo-current-preview" alt="Current logo" style="max-width:100%;max-height:100%;object-fit:contain;display:none;" />
+                  <span id="logo-current-empty" class="cell-muted" style="font-size:11px;text-align:center;padding:6px;">Default logo</span>
+                </div>
+                <div class="cell-muted" style="font-size:12.5px;line-height:1.5;">Used for the storefront navbar, the loading screen, the footer, and the browser tab icon (favicon).</div>
+              </div>
+            </div>
+            <div class="field">
+              <label>Upload New Logo</label>
+              <input type="file" id="logo-file-input" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" />
+              <div class="cell-muted" style="margin-top:6px;">PNG, JPG, JPEG or WebP. Max 5&nbsp;MB.</div>
+            </div>
+          </div>
+
+          <div class="field" id="logo-preview-wrap" style="display:none;">
+            <label>New Logo Preview</label>
+            <img class="image-preview visible" id="logo-new-preview" style="width:140px;height:140px;object-fit:contain;background:rgba(0,0,0,.35);" />
+          </div>
+
+          <div id="logo-progress-wrap" style="display:none;margin-bottom:16px;">
+            <div style="height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;">
+              <div id="logo-progress-bar" style="height:100%;width:0%;background:linear-gradient(135deg,var(--zest-bright),var(--zest-dark));transition:width .15s ease;"></div>
+            </div>
+            <div class="cell-muted" id="logo-progress-text" style="margin-top:6px;">Uploading… 0%</div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button type="button" class="btn btn-primary" id="logo-save-btn">Save Logo</button>
+            <button type="button" class="btn btn-outline" id="logo-restore-btn">Restore Default Logo</button>
+            <span class="field-error" id="logo-msg"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="modal-body">
+          <form id="settings-form">
+            <div class="form-row">
+              <div class="field"><label>Store Name</label><input id="set-storeName" /></div>
+              <div class="field"><label>Currency Symbol</label><input id="set-currencySymbol" maxlength="6" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Tax Rate (e.g. 0.08 = 8%)</label><input id="set-taxRate" type="number" step="0.001" /></div>
+              <div class="field"><label>Delivery Fee</label><input id="set-deliveryFee" type="number" step="0.01" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Free Delivery Threshold</label><input id="set-freeDeliveryThreshold" type="number" step="0.01" /></div>
+              <div class="field"><label>Support Phone / Note</label><input id="set-supportNote" /></div>
+            </div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="set-maintenanceMode" />
+              <label for="set-maintenanceMode">Maintenance mode (reference flag — wire this into the storefront if you want an actual banner/lockout)</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+            <span class="field-error" id="settings-msg" style="margin-left:10px;"></span>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= Generic Modal (Product / Category / Coupon forms) ================= -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modal-title">Form</h3><button class="icon-btn" id="modal-close">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Order Detail Drawer ================= -->
+<div class="drawer-overlay" id="order-drawer-overlay"></div>
+<div class="drawer" id="order-drawer">
+  <div class="drawer-head"><h3 id="order-drawer-title">Order</h3><button class="icon-btn" id="order-drawer-close">✕</button></div>
+  <div class="drawer-body" id="order-drawer-body"></div>
+</div>
+
+<div id="admin-toast"></div>
+
+<script type="module" src="script.js"></script>
+</body>
+</html>
